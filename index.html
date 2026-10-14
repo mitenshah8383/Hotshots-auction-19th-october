@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASC Auction — Demo</title>
+<style>
+:root{--bg:#0b1020;--panel:#151d33;--panel2:#1c2843;--line:#30405f;--text:#f5f7ff;--muted:#aab6d1;--gold:#f4c75e;--green:#38d9a9;--red:#ff6b78;--blue:#83a9ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#18294b 0,#0b1020 58%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:22px 16px 14px;text-align:center}header .eyebrow{color:var(--gold);font-size:.78rem;letter-spacing:.18em;font-weight:800}h1{margin:7px 0;font-size:clamp(1.7rem,5vw,2.8rem);line-height:1.05}header p{margin:8px 0;color:var(--muted)}
+.wrap{max-width:1120px;margin:auto;padding:12px 14px 36px}.notice{border:1px solid #725f2c;background:#322a18;color:#ffe6a0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.9rem}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.stat,.card{background:linear-gradient(145deg,var(--panel),#11182b);border:1px solid var(--line);border-radius:16px;padding:15px}.stat small{display:block;color:var(--muted);font-size:.75rem}.stat strong{display:block;font-size:1.35rem;margin-top:4px}
+.layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:14px}.card h2{font-size:1.05rem;margin:0 0 12px}.card h3{margin:0 0 8px;font-size:.98rem}
+label{display:block;color:var(--muted);font-size:.82rem;margin:10px 0 5px}input,select,button{font:inherit;border-radius:10px;border:1px solid var(--line);padding:11px 12px;width:100%;background:#0d1528;color:var(--text)}button{cursor:pointer;font-weight:750;transition:.15s}button:disabled{opacity:.35;cursor:not-allowed}.primary{background:var(--gold);border-color:var(--gold);color:#1d1a10}.green{background:#176b58;border-color:#2da98a}.blue{background:#203c72;border-color:#4268b2}.danger{background:#582630;border-color:#91414e}.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}.player-display{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:190px;border:1px dashed #52678f;background:linear-gradient(145deg,#1b2c4e,#11182b);border-radius:14px;padding:20px;margin-bottom:12px}.player-display .label{color:var(--gold);font-size:.75rem;letter-spacing:.16em;font-weight:800}.player-display .name{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:900;margin:8px 0}.player-display .sub{color:var(--muted);font-size:.9rem}.bidline{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#0c1427;border:1px solid var(--line);padding:12px;border-radius:12px;margin:10px 0}.bidline strong{font-size:1.3rem;color:var(--gold)}.bid-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.captains{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.captain{border:1px solid var(--line);background:#10192d;border-radius:12px;padding:11px}.captain .top{display:flex;justify-content:space-between;gap:5px;font-weight:800}.captain .remaining{color:var(--green);font-size:1.1rem;font-weight:850;margin:5px 0}.captain small{color:var(--muted)}.meter{height:5px;background:#293651;border-radius:8px;overflow:hidden;margin-top:7px}.meter span{display:block;height:100%;background:var(--green)}.team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.team{background:#10192d;border:1px solid var(--line);border-radius:12px;padding:12px}.team h3{display:flex;justify-content:space-between;gap:6px}.team ul{padding-left:18px;margin:8px 0;color:#d8e0f3}.team li{margin:4px 0}.muted{color:var(--muted)}.pill{display:inline-block;border-radius:100px;background:#293651;color:#dce6ff;padding:4px 8px;font-size:.75rem;font-weight:750}.sold-list{max-height:260px;overflow:auto}.sold-item{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #293651}.sold-item:last-child{border:0}.full{grid-column:1/-1}.small{font-size:.8rem;color:var(--muted)}.hidden{display:none!important}.config{background:#0e172a;border:1px solid #455a82;border-radius:12px;padding:12px;margin-top:10px}.footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:18px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.stats{gap:7px}.stat{padding:11px}.stat strong{font-size:1.1rem}.team-grid{grid-template-columns:1fr}.captains{grid-template-columns:repeat(2,minmax(0,1fr))}.full{grid-column:auto}}
+</style>
+</head>
+<body>
+<header><div class="eyebrow">ASC • INTERNAL EVENT</div><h1>TEAM AUCTION</h1><p>19 October · 8–11 PM · Courts 7, 8 &amp; 9 · ₹650 per head</p></header>
+<main class="wrap">
+<div class="notice" id="connectionNotice">DEMO MODE · All six captain bid buttons are available to test locally. Random tie-breaking between simultaneous bids across phones will be enabled in the shared live version.</div>
+<div class="stats">
+ <div class="stat"><small>Budget per captain</small><strong>1,00,000 pts</strong></div>
+ <div class="stat"><small>Players to auction</small><strong id="remainingCount">18</strong></div>
+ <div class="stat"><small>Players sold</small><strong id="soldCount">0 / 18</strong></div>
+</div>
+<div class="layout">
+<section class="card">
+<h2>🎯 Live player auction</h2>
+<div class="small" style="margin-bottom:8px">All six captains may bid. Use the individual captain buttons below to test bidding.</div>
+<div class="player-display"><div class="label" id="playerStatus">READY TO SPIN</div><div class="name" id="currentPlayer">Press Spin Player</div><div class="sub" id="playerSub">18 players available · Captains are assigned to their own teams</div></div>
+<div class="bidline"><div><div class="small">Current highest bid</div><strong id="currentBid">0 pts</strong></div><div style="text-align:right"><div class="small">Highest bidder</div><b id="highestBidder">—</b></div></div>
+<div class="row"><div><label for="bidIncrement">Bid increment</label><select id="bidIncrement"><option value="2000" selected>2,000 pts</option></select></div><div><label for="openingBid">Opening bid</label><select id="openingBid"><option value="5000" selected>5,000 pts</option></select></div></div>
+<div class="bidline"><div><div class="small">Time remaining</div><strong id="timerDisplay">13 sec</strong></div><div style="flex:1"><div class="meter"><span id="timerBar" style="width:100%"></span></div><div class="small" id="timerHint">Timer starts when player appears</div></div></div>
+<div class="bid-buttons" style="margin-top:12px"><button class="primary" id="spinBtn">🎲 Spin player</button><button class="green" id="bidBtn" disabled>Raise bid</button><button class="blue" id="soldBtn" disabled>🔨 Sold to highest bidder</button><button id="unsoldBtn" disabled>Mark unsold</button></div>
+<p class="small" id="auctionMessage" aria-live="polite">Spin a player to begin. Every bid is checked against the captain's remaining budget and roster slots.</p>
+<div class="row"><button id="nextBtn" class="blue" disabled>Next player</button><button id="resetBtn" class="danger">Reset auction</button></div>
+</section>
+<section class="card">
+<h2>🏆 Captain budgets &amp; bidding</h2><p class="small">All six captains can bid on the active player in this demo. The shared live version must use server-side arbitration to randomly resolve bids received in the same instant; Firebase hosting is required for bidding across phones.</p><div class="captains" id="captainCards"></div>
+</section>
+<section class="card full">
+<h2>👥 Final team sheets <span class="pill">4 players per team</span></h2><div class="team-grid" id="teams"></div>
+</section>
+<section class="card">
+<h2>📋 Auction history</h2><div class="sold-list" id="soldList"><p class="muted">No players sold yet.</p></div>
+</section>
+<section class="card hidden">
+<h2>🌐 Live Firebase setup (for later)</h2>
+<p class="small">Create a Firebase project, enable Realtime Database and Anonymous Authentication, then paste the web app config here. All captains must open the same hosted page and use the same room code.</p>
+<label for="roomCode">Auction room code</label><input id="roomCode" value="ASC-19OCT" maxlength="32">
+<label for="captainEmails">Captain account emails (JSON mapping)</label>
+<textarea id="captainEmails" rows="4" style="width:100%;background:#0d1528;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px" placeholder='{"Nadeem":"nadeem@example.com","Shri":"shri@example.com","Harsh":"harsh@example.com","Keyur":"keyur@example.com","Arif":"arif@example.com","Tushar":"tushar@example.com"}'></textarea>
+<label for="loginEmail">Username</label><input id="loginEmail" type="text" placeholder="Enter your username" autocomplete="username">
+<label for="loginPassword">Password</label><input id="loginPassword" type="password" placeholder="Enter your password" autocomplete="current-password">
+<div class="row" style="margin-top:8px"><button id="captainLoginBtn" class="primary">Log in</button><button id="viewerLoginBtn">Public view login</button><button id="logoutBtn">Log out</button></div>
+<p class="small" id="roleStatus">Captains can bid only for their own team. Public can view only. Demo passwords are not secure for a public live auction.</p>
+<label for="firebaseConfig">Firebase web app config (JSON)</label><textarea id="firebaseConfig" rows="5" style="width:100%;background:#0d1528;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px" placeholder='{"apiKey":"...","authDomain":"...","databaseURL":"https://YOUR-PROJECT-default-rtdb.firebaseio.com","projectId":"...","appId":"..."}'></textarea>
+<div class="row" style="margin-top:8px"><button class="primary" id="connectBtn">Connect live room</button><button id="disconnectBtn">Use this device only</button></div>
+<p class="small">For a quick private event, use a hard-to-guess room code and only share it with captains. Firebase database rules should be configured before the event; do not use unrestricted public write rules for a real auction.</p>
+<div class="config"><b>Hosting path</b><p class="small">Save this file as <code>index.html</code>, then upload it using Netlify Drop at <b>https://app.netlify.com/drop</b>. The generated site URL can be shared with captains. Live bidding works only after Firebase is configured.</p></div>
+</section>
+</div><div class="footer">Hotshots Auction · Login demo only · Shared live bidding requires Firebase setup</div>
+</main>
+<script>
+const INITIAL_PLAYERS = ["Viki","Deep","Gopal","Hemal","Karan","Harsh B","Saurabh","Shah","Keyur","Sid G","Arif","Anosh","Shrinath","Tushar","Ankit","Amresh","Sushe","Miten","Kaustubh","Rahim","Sid K","Rahul","Faisal","Nadeem"];
+const CAPTAINS = [{name:"Nadeem",player:"Nadeem"},{name:"Shri",player:"Shrinath"},{name:"Harsh",player:"Harsh B"},{name:"Keyur",player:"Keyur"},{name:"Arif",player:"Arif"},{name:"Tushar",player:"Tushar"}];
+const BUDGET=100000, MAX_TEAM=4;
+let state, db=null, auth=null, roomRef=null, live=false, applyingRemote=false, firebaseReady=false;
+const $=id=>document.getElementById(id);
+function freshState(){let teams={};CAPTAINS.forEach(c=>teams[c.name]={captain:c.name,players:[c.player],spent:0,remaining:BUDGET});return {players:INITIAL_PLAYERS.filter(n=>!CAPTAINS.some(c=>c.player===n)).map(name=>({name,status:"available",bid:0,highestBidder:null,soldTo:null,price:0})),teams,current:null,history:[],event:"ASC Internal Team Auction",updatedAt:Date.now()}}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function getCurrent(){return state.players.find(p=>p.name===state.current)||null}
+function message(t){$("auctionMessage").textContent=t}
+function captainName(){return $("captainSelect").value}
+let timerHandle=null;
+let secondsLeft=13;
+function stopTimer(){if(timerHandle){clearInterval(timerHandle);timerHandle=null}}
+function updateTimerUI(){
+ const el=$("timerDisplay"),bar=$("timerBar"),hint=$("timerHint");
+ if(el)el.textContent=secondsLeft+" sec";
+ if(bar)bar.style.width=Math.max(0,secondsLeft/13*100)+"%";
+ if(hint)hint.textContent=timerHandle?"Time left to raise the bid":"Timer paused";
+}
+function startTimer(){
+ stopTimer();secondsLeft=13;updateTimerUI();
+ timerHandle=setInterval(()=>{
+  secondsLeft--;updateTimerUI();
+  if(secondsLeft<=0){
+   stopTimer();
+   const p=getCurrent();
+   if(p&&p.status==="available"){
+    if(p.highestBidder)sell(true);
+    else unsold(true);
+   }
+  }
+ },1000);
+}
+function render(){
+ const p=getCurrent(); const available=state.players.filter(x=>x.status==="available"||x.status==="unsold").length;const sold=state.players.filter(x=>x.status==="sold").length;
+ $("remainingCount").textContent=available;$("soldCount").textContent=`${sold} / 18`;
+ $("currentPlayer").textContent=p?p.name:"Auction complete";$("playerStatus").textContent=p?(p.status==="sold"?"SOLD":p.status==="unsold"?"UNSOLD":"NOW UP"):"READY TO SPIN";
+ $("playerSub").textContent=p?(p.status==="sold"?`Won by ${p.soldTo} for ${p.price.toLocaleString()} pts`:p.status==="unsold"?"Marked unsold":`Roster slots available · ${state.players.filter(x=>x.status==="available").length} still available`):"All 18 auction players have been processed";
+ $("currentBid").textContent=(p?p.bid:0).toLocaleString()+" pts";$("highestBidder").textContent=p?.highestBidder||"—";updateTimerUI();
+ const selected=state.teams[currentCaptain];const canBid=currentRole==="captain"&&!!currentCaptain&&!!p&&p.status==="available"&&selected&&selected.players.length<MAX_TEAM&&selected.remaining >= (p.bid? p.bid+Number($("bidIncrement").value):Number($("openingBid").value))&&(!p.highestBidder||p.highestBidder!==currentCaptain);
+ $("bidBtn").disabled=!canBid;$("soldBtn").disabled=!(currentRole==="captain"&&!!currentCaptain&&p&&p.status==="available"&&p.highestBidder);$("unsoldBtn").disabled=!(currentRole==="captain"&&!!currentCaptain&&p&&p.status==="available");$("nextBtn").disabled=currentRole!=="captain"||!currentCaptain||!!(p&&p.status==="available");
+ $("spinBtn").disabled=currentRole!=="captain"||!currentCaptain||!!(p&&p.status==="available")||sold===18;
+ $("captainCards").innerHTML=CAPTAINS.map(c=>{const t=state.teams[c.name],pct=Math.max(0,Math.min(100,t.remaining/BUDGET*100));return `<div class="captain"><div class="top"><span>${escapeHtml(c.name)}</span><span class="pill">${t.players.length}/4</span></div><div class="remaining">${t.remaining.toLocaleString()} pts</div><small>Spent ${t.spent.toLocaleString()} pts</small><div class="meter"><span style="width:${pct}%"></span></div><button class="captainBidBtn blue" data-captain="${escapeHtml(c.name)}" style="margin-top:9px;padding:8px">Bid as ${escapeHtml(c.name)}</button></div>`}).join(""); document.querySelectorAll(".captainBidBtn").forEach(btn=>{btn.disabled=!(currentRole==="captain"&&currentCaptain===btn.dataset.captain&&p&&p.status==="available");btn.addEventListener("click",()=>bid(btn.dataset.captain));});
+ $("teams").innerHTML=CAPTAINS.map(c=>{const t=state.teams[c.name];return `<div class="team"><h3><span>${escapeHtml(c.name)}'s team</span><span class="pill">${t.players.length}/4</span></h3><ul>${t.players.map(n=>`<li>${escapeHtml(n)}${n===c.player?' <span class="small">(captain)</span>':(state.history.find(h=>h.player===n)?` <span class="small">(${state.history.find(h=>h.player===n).price.toLocaleString()} pts)</span>`:"")}</li>`).join("")}</ul><div class="small">Spent ${t.spent.toLocaleString()} · Remaining ${t.remaining.toLocaleString()} pts</div></div>`}).join("");
+ $("soldList").innerHTML=state.history.length?state.history.slice().reverse().map(h=>`<div class="sold-item"><span><b>${escapeHtml(h.player)}</b><br><span class="small">${escapeHtml(h.captain)}</span></span><b>${h.price.toLocaleString()} pts</b></div>`).join(""):'<p class="muted">No players sold yet.</p>';
+}
+function change(mutator, fallbackMessage){
+ if(live&&roomRef){
+  let note=fallbackMessage||"Auction updated.";
+  roomRef.transaction(current=>{
+   const draft=current||freshState();
+   note=mutator(draft)||note;
+   draft.updatedAt=Date.now();
+   return draft;
+  },(err,committed,snap)=>{
+   if(err){message("Sync failed: "+err.message);return}
+   if(committed&&snap.val()){state=snap.val();render();message(note)}
+  },false);
+ }else{
+  const note=mutator(state)||fallbackMessage||"Auction updated.";
+  state.updatedAt=Date.now();render();message(note);
+ }
+}
+function spin(){
+ try {
+  if(currentRole!=="captain"){message("Demo controls unavailable. Choose a captain in the dropdown.");return}
+  const current=getCurrent();
+  if(current&&current.status==="available"){message("Finish the current player first.");return}
+  let pool=state.players.filter(p=>p.status==="available");
+  if(!pool.length){
+   const unsoldPool=state.players.filter(p=>p.status==="unsold");
+   if(unsoldPool.length){
+    unsoldPool.forEach(p=>{p.status="available";p.bid=0;p.highestBidder=null});
+    pool=state.players.filter(p=>p.status==="available");
+    message("Round complete. Unsold players have returned to the wheel.");
+   } else {
+    state.current=null;render();message("All players sold! Auction complete.");return;
+   }
+  }
+  if(!pool.length){message("No players available to spin. Tap Reset auction to restart the demo.");return}
+  const p=pool[Math.floor(Math.random()*pool.length)];
+  state.current=p.name;p.status="available";p.bid=0;p.highestBidder=null;p.soldTo=null;p.price=0;
+  render();
+  message(`${p.name} is up! Opening bid: 5,000 points. Timer: 13 seconds.`);
+  startTimer();
+ } catch(e) {
+  message("Spin error: "+(e&&e.message?e.message:String(e)));
+ }
+}
+function bid(captainOverride){
+ if(currentRole!=="captain"||!currentCaptain){message("Log in as a captain to bid.");return}
+ const c=currentCaptain,increment=2000,opening=5000;
+ if(captainOverride && captainOverride!==currentCaptain){message("You can bid only for your own team.");return}
+ change(d=>{
+  const p=d.players.find(x=>x.name===d.current),t=d.teams[c];
+  if(!p||p.status!=="available"||!t)return "No active player to bid on.";
+  const amount=p.bid?p.bid+increment:opening;
+  if(t.players.length>=MAX_TEAM)return `${c} already has 4 players.`;
+  if(t.remaining<amount)return `${c} does not have enough points for this bid.`;
+  if(p.highestBidder===c)return "You are already the highest bidder.";
+  p.bid=amount;p.highestBidder=c;
+  return `${c} bids ${amount.toLocaleString()} points for ${p.name}. Timer reset to 13 seconds.`;
+ },"Bid placed.");
+ startTimer();
+}
+function sell(auto=false){
+ if(currentRole!=="captain"){message("Demo controls unavailable.");return}
+ stopTimer();
+ change(d=>{
+  const p=d.players.find(x=>x.name===d.current);
+  if(!p||p.status!=="available"||!p.highestBidder)return "There is no valid winning bid.";
+  const t=d.teams[p.highestBidder];
+  if(!t||t.players.length>=MAX_TEAM||t.remaining<p.bid)return "Sale blocked: team size or budget limit.";
+  t.players.push(p.name);t.spent+=p.bid;t.remaining-=p.bid;p.status="sold";p.soldTo=p.highestBidder;p.price=p.bid;
+  d.history.push({player:p.name,captain:p.highestBidder,price:p.bid});
+  return auto?`⏱ Time up — ${p.name} sold to ${p.soldTo} for ${p.price.toLocaleString()} points.`:`${p.name} sold to ${p.soldTo} for ${p.price.toLocaleString()} points.`;
+ },"Player sold.");
+}
+function unsold(auto=false){
+ if(currentRole!=="captain"){message("Demo controls unavailable.");return}
+ stopTimer();
+ change(d=>{
+  const p=d.players.find(x=>x.name===d.current);
+  if(!p||p.status!=="available")return "No active player to mark unsold.";
+  p.status="unsold";return auto?`⏱ No bids — ${p.name} is unsold and will return after this round.`:`${p.name} marked unsold and will return after this round.`;
+ },"Player marked unsold.");
+}
+function next(){
+ if(currentRole!=="captain"){message("Demo controls unavailable.");return}
+ stopTimer();
+ change(d=>{
+  const p=d.players.find(x=>x.name===d.current);
+  if(p&&p.status==="available")return "Sell or mark this player unsold first.";
+  d.current=null;return "Ready for the next spin.";
+ },"Ready for next player.");
+}
+function reset(){
+ if(currentRole!=="captain"){message("Demo controls unavailable.");return}
+ stopTimer();
+ if(!confirm("Reset the entire auction? This clears all bids, sales and teams for everyone in this room."))return;
+ if(live&&roomRef){
+  roomRef.set(freshState()).then(()=>{message("Auction reset for all connected captains.")}).catch(e=>message("Reset failed: "+e.message));
+ }else{state=freshState();render();message("Auction reset.")}
+}
+function setupSelect(){ $("captainSelect").innerHTML=CAPTAINS.map(c=>`<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join("")}
+function loadFirebaseScripts(){return new Promise((resolve,reject)=>{if(window.firebase){resolve();return}let a=document.createElement("script");a.src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js";a.onload=()=>{let b=document.createElement("script");b.src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js";b.onload=()=>{let c=document.createElement("script");c.src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js";c.onload=resolve;c.onerror=reject;document.head.appendChild(c)};b.onerror=reject;document.head.appendChild(b)};a.onerror=reject;document.head.appendChild(a)})}
+let captainEmailMap = {};
+const DEMO_LOGINS = {
+ "nadeem": {password:"nadeem111", captain:"Nadeem"},
+ "shri": {password:"shri111", captain:"Shri"},
+ "harsh": {password:"harsh111", captain:"Harsh"},
+ "keyur": {password:"keyur111", captain:"Keyur"},
+ "arif": {password:"arif111", captain:"Arif"},
+ "tushar": {password:"tushar111", captain:"Tushar"},
+ "public": {password:"12345", captain:null}
+};
+let currentRole = "signed-out";
+let currentCaptain = null;
+async function connect(){
+ try{
+  const cfg=JSON.parse($("firebaseConfig").value);
+  captainEmailMap=JSON.parse($("captainEmails").value||"{}");
+  if(!cfg.databaseURL||!cfg.apiKey||!cfg.projectId)throw Error("Config needs apiKey, projectId and databaseURL.");
+  $("connectBtn").disabled=true;
+  await loadFirebaseScripts();
+  const appName="ascAuctionApp";
+  let app;try{app=firebase.app(appName)}catch(e){app=firebase.initializeApp(cfg,appName)}
+  auth=app.auth();db=app.database();
+  const room=$("roomCode").value.trim().replace(/[.#$[\]]/g,"_");
+  if(!room)throw Error("Enter a room code.");
+  roomRef=db.ref("ascAuctionRooms/"+room);
+  const snap=await roomRef.once("value");
+  // A first-time captain creates the room after authenticating; guests cannot initialize it.
+  if(window.ascRoomListener && window.ascRoomListenerRef)window.ascRoomListenerRef.off("value",window.ascRoomListener);
+  window.ascRoomListener=(s)=>{
+    const v=s.val();if(v&&v.teams&&v.players){
+      applyingRemote=true;state=v;render();applyingRemote=false;
+      $("connectionNotice").textContent="LIVE CONNECTED · Room "+room+" · "+(currentRole==="captain"?"Captain bidding enabled.":"View-only mode.");
+      $("connectionNotice").style.background="#103a32";$("connectionNotice").style.borderColor="#267b68";
+    }
+  };
+  window.ascRoomListenerRef=roomRef;
+  roomRef.on("value",window.ascRoomListener);
+  live=true;firebaseReady=true;
+  $("connectBtn").textContent="Connected";
+  message("Connected to shared live room "+room+". Sign in as a captain or view as guest.");
+ }catch(e){message("Could not connect: "+e.message);alert("Connection failed: "+e.message)}
+ finally{$("connectBtn").disabled=false}
+}
+async function captainLogin(){
+ const username=$("loginEmail").value.trim().toLowerCase();
+ const password=$("loginPassword").value;
+ const account=DEMO_LOGINS[username];
+ if(!account || account.password!==password){
+   message("Login failed. Check username and password.");
+   alert("Login failed. Check username and password.");
+   return;
+ }
+ if(username==="public"){
+   currentRole="viewer";currentCaptain=null;
+   $("roleStatus").textContent="Logged in as public viewer. You can view the auction but cannot bid or control it.";
+   $("captainSelect").disabled=true;
+   render();message("Public view-only login successful.");return;
+ }
+ currentRole="captain";currentCaptain=account.captain;
+ $("captainSelect").value=currentCaptain;
+ $("captainSelect").disabled=true;
+ $("roleStatus").textContent="Logged in as "+currentCaptain+". You can bid only for your own team. This is a local demo login, not secure authentication.";
+ render();message("Captain login successful: "+currentCaptain+".");
+}
+async function viewerLogin(){
+ $("loginEmail").value="public";$("loginPassword").value="12345";
+ await captainLogin();
+}
+function logoutLocal(){
+ currentRole="signed-out";currentCaptain=null;
+ $("captainSelect").disabled=true;
+ $("roleStatus").textContent="Logged out. Log in with a captain username or the public account to continue.";
+ render();message("Logged out.");
+}
+function disconnect(){if(roomRef)roomRef.off();if(auth)auth.signOut().catch(()=>{});live=false;roomRef=null;db=null;currentRole="signed-out";currentCaptain=null;$("captainSelect").disabled=false;state=freshState();render();$("connectionNotice").textContent="Demo mode: this page works on this device. For six captains to bid together from different phones, connect a Firebase Realtime Database below.";$("connectionNotice").style.background="";$("connectionNotice").style.borderColor="";message("Using this device only.")}
+$("captainLoginBtn").onclick=captainLogin;$("viewerLoginBtn").onclick=viewerLogin;$("logoutBtn").onclick=logoutLocal;$("spinBtn").onclick=spin;$("bidBtn").onclick=bid;$("soldBtn").onclick=sell;$("unsoldBtn").onclick=unsold;$("nextBtn").onclick=next;$("resetBtn").onclick=reset;$("connectBtn").onclick=connect;$("disconnectBtn").onclick=disconnect;$("captainSelect").onchange=()=>{currentCaptain=captainName();render()};$("bidIncrement").value="2000";$("openingBid").value="5000";$("bidIncrement").disabled=true;$("openingBid").disabled=true;
+setupSelect();state=freshState();currentRole="signed-out";currentCaptain=null;$("captainSelect").disabled=true;render();$("roleStatus").textContent="Please log in. Captains can bid only for their own team; public is view-only.";
+</script>
+</body></html>
